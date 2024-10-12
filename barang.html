@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rekap Keuangan Saya</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f7f7f7;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        h2 {
+            text-align: center;
+            color: #333;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+            transition: border-color 0.3s ease;
+        }
+
+        input:focus {
+            border-color: #4CAF50;
+            outline: none;
+        }
+
+        button {
+            padding: 10px;
+            width: 100%;
+            background-color: #ff71d0;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #ed009e;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            font-size: 16px;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        .total-container {
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            text-align: right;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .selected {
+            background-color: #e0f7e0 !important;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 600px) {
+            .container {
+                padding: 15px;
+            }
+
+            table, th, td {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Nota Jajan</h2>
+
+        <input type="text" id="namaBarang" placeholder="Nama Barang">
+        <input type="number" id="hargaBarang" placeholder="Harga Barang">
+        <button onclick="tambahBarang()">Tambah Barang</button>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Barang</th>
+                    <th>Harga</th>
+                </tr>
+            </thead>
+            <tbody id="daftarBarang"></tbody>
+        </table>
+
+        <div class="total-container">
+            Jumlah Barang: <span id="jumlahBarang">0</span><br>
+            Total Harga: Rp <span id="totalHarga">0</span>
+        </div>
+
+        <button id="hapusButton" class="hidden" onclick="hapusBarang()">Hapus Barang</button>
+    </div>
+
+    <script>
+        let selectedRowIndex = null; // Menyimpan indeks baris yang dipilih
+
+        // Fungsi untuk menambah barang
+        function tambahBarang() {
+            const namaBarang = document.getElementById('namaBarang').value;
+            const hargaBarang = document.getElementById('hargaBarang').value;
+
+            if (namaBarang && hargaBarang) {
+                // Ambil data barang dari localStorage
+                let barangList = JSON.parse(localStorage.getItem('barangList')) || [];
+
+                // Pastikan harga dimasukkan sebagai angka (parseFloat)
+                barangList.push({ nama: namaBarang, harga: parseFloat(hargaBarang) });
+
+                // Simpan array yang diperbarui ke localStorage
+                localStorage.setItem('barangList', JSON.stringify(barangList));
+
+                // Reset form
+                document.getElementById('namaBarang').value = '';
+                document.getElementById('hargaBarang').value = '';
+
+                // Tampilkan barang yang baru ditambahkan
+                tampilkanBarang();
+            } else {
+                alert('Mohon isi semua kolom!');
+            }
+        }
+
+        // Fungsi untuk menampilkan barang di tabel
+        function tampilkanBarang() {
+            const barangList = JSON.parse(localStorage.getItem('barangList')) || [];
+            const daftarBarang = document.getElementById('daftarBarang');
+            const jumlahBarangElement = document.getElementById('jumlahBarang');
+            const totalHargaElement = document.getElementById('totalHarga');
+            daftarBarang.innerHTML = '';
+
+            let totalHarga = 0;
+            let jumlahBarang = 0;
+
+            barangList.forEach((barang, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${barang.nama}</td>
+                    <td>Rp ${barang.harga}</td>
+                `;
+
+                // Tambahkan event listener untuk klik pada baris
+                row.addEventListener('click', function() {
+                    pilihBaris(index); // Panggil fungsi pilihBaris
+                });
+
+                daftarBarang.appendChild(row);
+
+                // Tambahkan harga barang ke total
+                totalHarga += barang.harga;
+                jumlahBarang++; // Tambahkan jumlah barang
+            });
+
+            // Tampilkan jumlah barang dan total harga
+            jumlahBarangElement.innerText = jumlahBarang;
+            totalHargaElement.innerText = totalHarga;
+        }
+
+        // Fungsi untuk memilih baris
+        function pilihBaris(index) {
+            const rows = document.querySelectorAll('#daftarBarang tr');
+            rows.forEach((row, i) => {
+                row.classList.remove('selected'); // Hapus status terpilih dari semua baris
+                if (i === index) {
+                    row.classList.add('selected'); // Tambahkan status terpilih pada baris yang diklik
+                }
+            });
+
+            // Simpan indeks baris yang dipilih
+            selectedRowIndex = index;
+
+            // Tampilkan tombol hapus
+            document.getElementById('hapusButton').classList.remove('hidden');
+        }
+
+        // Fungsi untuk menghapus barang
+        function hapusBarang() {
+            if (selectedRowIndex !== null) {
+                let barangList = JSON.parse(localStorage.getItem('barangList'));
+                barangList.splice(selectedRowIndex, 1); // Hapus barang dari array
+                localStorage.setItem('barangList', JSON.stringify(barangList)); // Simpan perubahan
+                tampilkanBarang();
+
+                // Sembunyikan tombol hapus lagi
+                document.getElementById('hapusButton').classList.add('hidden');
+            }
+        }
+
+        // Tampilkan barang saat halaman dimuat
+        window.onload = tampilkanBarang;
+    </script>
+</body>
+</html>
